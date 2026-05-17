@@ -181,3 +181,26 @@ int BigInteger::divideByInt(int value) {
     removeLeadingZeros();
     return static_cast<int>(remainder);
 }
+
+BigInteger operator*(const BigInteger& left, const BigInteger& right){
+    if (left.isZero() or right.isZero()){
+        return BigInteger();
+    }
+
+    BigInteger res;
+    res.digits_.resize(left.digits_.size() + right.digits_.size());
+
+    for (long long i = 0;left.digits_.size();++i ){
+        long long carry = 0;
+        for (long long j = 0; j<right.digits_.size() or carry != 0; ++j ){
+            long long curr = res.digits_[i+ j] +carry;
+            if (j <right.digits_.size()){
+                curr+= 1LL * left.digits_[i] * right.digits_[j];
+            }
+            res.digits_[i+j] = static_cast<int>(curr %BigInteger::Base);
+            carry = curr/BigInteger::Base;
+        }
+    }
+    res.removeLeadingZeros();
+    return res;
+}

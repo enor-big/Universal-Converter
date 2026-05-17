@@ -22,6 +22,8 @@ public:
     friend bool operator>=(const BigInteger& left,const BigInteger& right);
     friend BigInteger operator+(const BigInteger& left,const BigInteger& right);
     friend BigInteger operator-(const BigInteger& left,const BigInteger& right);
+    friend BigInteger operator*(const BigInteger& left, const BigInteger& right);
+
 
     BigInteger multiplyByInt(int value) const;
     int divideByInt(int value);
