@@ -1,4 +1,5 @@
 #include "mainwindow.h"
+#include "converter.h"
 
 #include <QWidget>
 #include <QVBoxLayout>
@@ -180,28 +181,112 @@ void MainWindow::setupUi() {
     connect(saveButton_, &QPushButton::clicked,
             this, &MainWindow::onSaveClicked);
 }
-void MainWindow::onConvertClicked() {
 
+void MainWindow::onConvertClicked() {
+    clearError();
+    outputEdit_->clear();
+
+    QString input = inputEdit_->text().trimmed();
+    QString pText = fromBaseEdit_->text().trimmed();
+    QString qText = toBaseEdit_->text().trimmed();
+
+    bool okP = false;
+    bool okQ = false;
+
+    int p = pText.toInt(&okP);
+    int q = qText.toInt(&okQ);
+
+    if (!okP || p < 2 || p > 500) {
+        showError("Ошибка: основание исходной системы должно быть целым числом от 2 до 500.");
+        return;
+    }
+
+    if (!okQ || q < 2 || q > 500) {
+        showError("Ошибка: основание целевой системы должно быть целым числом от 2 до 500.");
+        return;
+    }
+
+    if (input.isEmpty()) {
+        showError("Ошибка: входная строка пуста.");
+        return;
+    }
+
+    QString result = BaseConverter::convert(input, p, q);
+    outputEdit_->setPlainText(result);
 }
 
 void MainWindow::onLoadClicked() {
+    clearError();
 
+    QString fileName = QFileDialog::getOpenFileName(
+        this,
+        "Открыть файл",
+        "",
+        "Text files (*.txt);;All files (*.*)"
+        );
+
+    if (fileName.isEmpty()) {
+        return;
+    }
+
+    QFile file(fileName);
+
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        showError("Ошибка: не удалось открыть файл.");
+        return;
+    }
+
+    QTextStream in(&file);
+
+    QString p = in.readLine().trimmed();
+    QString q = in.readLine().trimmed();
+    QString input = in.readLine().trimmed();
+
+    if (p.isEmpty() || q.isEmpty() || input.isEmpty()) {
+        showError("Ошибка: файл должен содержать три строки: p, q, input.");
+        return;
+    }
+
+    fromBaseEdit_->setText(p);
+    toBaseEdit_->setText(q);
+    inputEdit_->setText(input);
 }
 
 void MainWindow::onSaveClicked() {
+    clearError();
 
+    QString result = outputEdit_->toPlainText();
+
+    if (result.isEmpty()) {
+        showError("Ошибка: нечего сохранять.");
+        return;
+    }
+
+    QString fileName = QFileDialog::getSaveFileName(
+        this,
+        "Сохранить результат",
+        "",
+        "Text files (*.txt);;All files (*.*)"
+        );
+
+    if (fileName.isEmpty()) {
+        return;
+    }
+
+    QFile file(fileName);
+
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        showError("Ошибка: не удалось сохранить файл.");
+        return;
+    }
+
+    QTextStream out(&file);
+    out << result;
 }
-
 void MainWindow::showError(const QString& message) {
     errorLabel_->setText(message);
 }
 
 void MainWindow::clearError() {
     errorLabel_->clear();
-}
-
-QString MainWindow::convertStub(const QString& input, int p, int q) {
-    return "input = " + input +
-           "\np = " + QString::number(p) +
-           "\nq = " + QString::number(q);
 }

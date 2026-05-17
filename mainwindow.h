@@ -34,5 +34,4 @@ private:
     void showError(const QString& message);
     void clearError();
 
-    QString convertStub(const QString& input, int p, int q);
 };
