@@ -204,3 +204,61 @@ BigInteger operator*(const BigInteger& left, const BigInteger& right){
     res.removeLeadingZeros();
     return res;
 }
+
+std::pair<BigInteger, BigInteger>
+BigInteger::divmod(const BigInteger& left,
+                   const BigInteger& right) {
+    if (right.isZero()) {
+        throw std::invalid_argument("Делитель 0");
+    }
+    if (left < right){
+        return {BigInteger(), left};
+    }
+
+    BigInteger quotient;
+    BigInteger remainder;
+
+    quotient.digits_.resize(left.digits_.size());
+    for (int i = static_cast<int>(left.digits_.size())-1;i>=0;--i){
+        remainder.digits_.insert(remainder.digits_.begin(), left.digits_[i]);
+        remainder.removeLeadingZeros();
+        int low = 0;
+        int high = Base-1;
+        int best = 0;
+        while (low<=high) {
+            int mid = low+(high - low) /2;
+            BigInteger curr = right.multiplyByInt(mid);
+            if (curr<=remainder){
+                best = mid;
+                low = mid+1;
+            } else{
+                high = mid-1;
+            }
+        }
+        quotient.digits_[i] = best;
+        remainder = remainder - right.multiplyByInt(best);
+    }
+    quotient.removeLeadingZeros();
+    remainder.removeLeadingZeros();
+    return {quotient, remainder};
+}
+
+BigInteger operator/(const BigInteger& left,
+                     const BigInteger& right){
+    return BigInteger::divmod(left, right).first;
+}
+
+BigInteger operator%(const BigInteger& left,
+                     const BigInteger& right){
+    return BigInteger::divmod(left, right).second;
+}
+
+BigInteger BigInteger::gcd(BigInteger a, BigInteger b) {
+    while (!b.isZero()) {
+        BigInteger remainder = a % b;
+        a = b;
+        b = remainder;
+    }
+
+    return a;
+}

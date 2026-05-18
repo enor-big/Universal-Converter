@@ -3,6 +3,7 @@
 #define BIGINTEGER_H
 #include <string>
 #include <vector>
+#include <utility>
 
 class BigInteger
 {
@@ -20,18 +21,30 @@ public:
     friend bool operator<=(const BigInteger& left,const BigInteger& right);
     friend bool operator>(const BigInteger& left,const BigInteger& right);
     friend bool operator>=(const BigInteger& left,const BigInteger& right);
-    friend BigInteger operator+(const BigInteger& left,const BigInteger& right);
-    friend BigInteger operator-(const BigInteger& left,const BigInteger& right);
-    friend BigInteger operator*(const BigInteger& left, const BigInteger& right);
+    friend BigInteger operator+(const BigInteger& left,
+                                const BigInteger& right);
+    friend BigInteger operator-(const BigInteger& left,
+                                const BigInteger& right);
+    friend BigInteger operator*(const BigInteger& left,
+                                const BigInteger& right);
+    friend BigInteger operator/(const BigInteger& left,
+                                const BigInteger& right);
 
+    friend BigInteger operator%(const BigInteger& left,
+                                const BigInteger& right);
 
     BigInteger multiplyByInt(int value) const;
     int divideByInt(int value);
+
 private:
     static const int Base = 1000000000;
     static const int BaseDigits = 9;
     std::vector<int> digits_;
     void removeLeadingZeros();
+    static std::pair<BigInteger, BigInteger>
+    divmod(const BigInteger& left,
+           const BigInteger& right);
+    static BigInteger gcd(BigInteger a, BigInteger b);
 };
 
 #endif // BIGINTEGER_H
