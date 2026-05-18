@@ -35,6 +35,7 @@ public:
 
     BigInteger multiplyByInt(int value) const;
     int divideByInt(int value);
+    static BigInteger gcd(BigInteger a, BigInteger b);
 
 private:
     static const int Base = 1000000000;
@@ -44,7 +45,7 @@ private:
     static std::pair<BigInteger, BigInteger>
     divmod(const BigInteger& left,
            const BigInteger& right);
-    static BigInteger gcd(BigInteger a, BigInteger b);
+
 };
 
 #endif // BIGINTEGER_H
