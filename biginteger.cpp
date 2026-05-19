@@ -99,11 +99,11 @@ BigInteger operator+(const BigInteger& left, const BigInteger& right){
 
     for (long long i= 0;i<maxSize || carry !=0;++i){
         long long sum = carry;
-        if (i<left.digits_.size(), right.digits_.size());{
+        if (i<left.digits_.size()){
             sum+=left.digits_[i];
         }
-        if (i<right.digits_.size());{
-            sum+=left.digits_[i];
+        if (i<right.digits_.size()){
+            sum+=right.digits_[i];
         }
         res.digits_.push_back(static_cast<int>(sum%BigInteger::Base));
         carry = static_cast<int>(sum/BigInteger::Base);
@@ -188,19 +188,32 @@ BigInteger operator*(const BigInteger& left, const BigInteger& right){
     }
 
     BigInteger res;
-    res.digits_.resize(left.digits_.size() + right.digits_.size());
+    res.digits_.assign(left.digits_.size() + right.digits_.size(),0);
 
-    for (long long i = 0;left.digits_.size();++i ){
+    for (long long i = 0;i<left.digits_.size();++i ){
         long long carry = 0;
-        for (long long j = 0; j<right.digits_.size() or carry != 0; ++j ){
-            long long curr = res.digits_[i+ j] +carry;
-            if (j <right.digits_.size()){
-                curr+= 1LL * left.digits_[i] * right.digits_[j];
-            }
+        for (long long j = 0; j<right.digits_.size(); ++j ){
+            long long curr = res.digits_[i+ j] +carry +  1LL * left.digits_[i] * right.digits_[j];
             res.digits_[i+j] = static_cast<int>(curr %BigInteger::Base);
             carry = curr/BigInteger::Base;
         }
+        long long pos = i + right.digits_.size();
+
+        while (carry != 0) {
+            long long curr = res.digits_[pos] + carry;
+
+            res.digits_[pos] = static_cast<int>(curr % BigInteger::Base);
+            carry = curr / BigInteger::Base;
+
+            ++pos;
+
+            if (pos >= res.digits_.size() && carry != 0) {
+                res.digits_.push_back(0);
+            }
+        }
     }
+
+
     res.removeLeadingZeros();
     return res;
 }

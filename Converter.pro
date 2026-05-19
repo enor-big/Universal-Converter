@@ -11,13 +11,15 @@ SOURCES += \
     biginteger.cpp \
     converter.cpp \
     main.cpp \
-    mainwindow.cpp
+    mainwindow.cpp \
+    parser.cpp
 
 HEADERS += \
     bigfraction.h \
     biginteger.h \
     converter.h \
-    mainwindow.h
+    mainwindow.h \
+    parser.h
 
 FORMS +=
 
