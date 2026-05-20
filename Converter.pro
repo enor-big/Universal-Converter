@@ -10,6 +10,7 @@ SOURCES += \
     bigfraction.cpp \
     biginteger.cpp \
     converter.cpp \
+    formatter.cpp \
     main.cpp \
     mainwindow.cpp \
     parser.cpp
@@ -18,6 +19,7 @@ HEADERS += \
     bigfraction.h \
     biginteger.h \
     converter.h \
+    formatter.h \
     mainwindow.h \
     parser.h
 
