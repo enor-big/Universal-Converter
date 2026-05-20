@@ -56,8 +56,8 @@ void MainWindow::setupUi() {
     toBaseEdit_ = new QLineEdit;
 
     inputEdit_->setPlaceholderText("Например: 0.12(34)");
-    fromBaseEdit_->setPlaceholderText("2.500");
-    toBaseEdit_->setPlaceholderText("2.500");
+    fromBaseEdit_->setPlaceholderText("2");
+    toBaseEdit_->setPlaceholderText("2");
 
     QFormLayout* formLayout = new QFormLayout;
     formLayout->addRow("Исходное число:", inputEdit_);

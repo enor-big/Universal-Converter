@@ -116,31 +116,65 @@ int BaseParser::readDigit(const QString& input, int& pos, int base) {
         ++pos;
 
         if (pos >= input.size()) {
-            throw std::invalid_argument("Ошибка: не закрыта квадратная скобка.");
+            throw std::invalid_argument(
+                "Ошибка: не закрыта квадратная скобка."
+                );
         }
 
         QString number;
 
         while (pos < input.size() && input[pos] != ']') {
-            if (input[pos] < '0' || input[pos] > '9') {
-                throw std::invalid_argument("Ошибка: внутри квадратных скобок должна быть десятичная цифра.");
-            }
-
             number.push_back(input[pos]);
             ++pos;
         }
 
         if (pos >= input.size() || input[pos] != ']') {
-            throw std::invalid_argument("Ошибка: не закрыта квадратная скобка.");
+            throw std::invalid_argument(
+                "Ошибка: не закрыта квадратная скобка."
+                );
         }
 
         if (number.isEmpty()) {
-            throw std::invalid_argument("Ошибка: пустые квадратные скобки.");
+            throw std::invalid_argument(
+                "Ошибка: пустые квадратные скобки."
+                );
         }
 
-        digit = number.toInt();
+        bool onlyDigits = true;
+
+        for (QChar current : number) {
+            if (current < '0' || current > '9') {
+                onlyDigits = false;
+                break;
+            }
+        }
+
+        if (onlyDigits) {
+            digit = number.toInt();
+        } else {
+            if (number.size() != 1) {
+                throw std::invalid_argument(
+                    "Ошибка: некорректная запись цифры."
+                    );
+            }
+
+            QChar current = number[0];
+
+            if (current >= 'A' && current <= 'Z') {
+                digit = current.unicode() - 'A' + 10;
+            } else if (current >= 'a' && current <= 'z') {
+                digit = current.unicode() - 'a' + 10;
+            } else {
+                throw std::invalid_argument(
+                    "Ошибка: некорректная запись цифры."
+                    );
+            }
+        }
+
         ++pos;
-    } else {
+    }
+
+    else {
         throw std::invalid_argument("Ошибка: недопустимый символ во входной строке.");
     }
 

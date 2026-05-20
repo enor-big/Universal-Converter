@@ -182,7 +182,7 @@ int BigInteger::divideByInt(int value) {
     return static_cast<int>(remainder);
 }
 
-BigInteger operator*(const BigInteger& left, const BigInteger& right){
+BigInteger BigInteger::simpleMultiply(const BigInteger& left, const BigInteger& right){
     if (left.isZero() or right.isZero()){
         return BigInteger();
     }
@@ -216,6 +216,11 @@ BigInteger operator*(const BigInteger& left, const BigInteger& right){
 
     res.removeLeadingZeros();
     return res;
+}
+
+BigInteger operator*(const BigInteger& left,
+                     const BigInteger& right) {
+    return BigInteger::simpleMultiply(left, right);
 }
 
 std::pair<BigInteger, BigInteger>
@@ -274,4 +279,55 @@ BigInteger BigInteger::gcd(BigInteger a, BigInteger b) {
     }
 
     return a;
+}
+
+BigInteger BigInteger::karatsubaMultiply(const BigInteger& left, const BigInteger& right){
+    if (left.isZero() or right.isZero()){
+        return BigInteger();
+    }
+    const long long  limit=64;
+
+    if (left.digits_.size() <=limit ||
+        right.digits_.size() <=limit){
+        return simpleMultiply(left, right);
+    }
+
+    long long n= std::max(left.digits_.size(), right.digits_.size());
+    long long half = n/2;
+    BigInteger lowLeft;
+    BigInteger highLeft;
+    BigInteger lowRight;
+    BigInteger highRight;
+
+    for (long long i = 0; i<std::min<long long>(half,left.digits_.size()); ++i){
+        lowLeft.digits_.push_back(left.digits_[i]);
+    }
+    for (long long i = half; i<left.digits_.size(); ++i){
+        highLeft.digits_.push_back(left.digits_[i]);
+    }
+    for (long long i = 0; i<std::min<long long>(half,right.digits_.size()); ++i){
+        lowRight.digits_.push_back(left.digits_[i]);
+    }
+    for (long long i = half; i<left.digits_.size(); ++i){
+        highRight.digits_.push_back(left.digits_[i]);
+    }
+    lowLeft.removeLeadingZeros();
+    highLeft.removeLeadingZeros();
+    lowRight.removeLeadingZeros();
+    highRight.removeLeadingZeros();
+    BigInteger z0=karatsubaMultiply(lowLeft, lowRight);
+    BigInteger z1=karatsubaMultiply(lowLeft+highLeft, lowRight+highRight);
+    BigInteger z2 = karatsubaMultiply(highLeft, highRight);
+
+    z1 = z1-z2-z0;
+    BigInteger z2Shift = z2;
+    z2Shift.digits_.insert(z2Shift.digits_.begin(), 2*half, 0);
+
+    BigInteger z1Shift = z1;
+    z1Shift.digits_.insert(z1Shift.digits_.begin(), 2*half, 0);
+
+    BigInteger res = z2Shift + z1Shift +z0;
+    res.removeLeadingZeros();
+    return res;
+
 }

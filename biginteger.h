@@ -45,6 +45,12 @@ private:
     static std::pair<BigInteger, BigInteger>
     divmod(const BigInteger& left,
            const BigInteger& right);
+    static BigInteger simpleMultiply(const BigInteger& left,
+                                     const BigInteger& right);
+
+    static BigInteger karatsubaMultiply(const BigInteger& left,
+                                        const BigInteger& right);
+
 
 };
 
