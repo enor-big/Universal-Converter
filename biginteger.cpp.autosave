@@ -1,0 +1,320 @@
+#include "biginteger.h"
+
+#include <algorithm>
+#include <iomanip>
+#include <sstream>
+#include <stdexcept>
+
+BigInteger::BigInteger() {}
+
+BigInteger::BigInteger(unsigned long long value){
+    if (value == 0){
+        return;
+    }
+    while (value>0){
+        digits_.push_back(value%Base);
+        value /= Base;
+    }
+}
+
+BigInteger::BigInteger(const std::string& value){
+    if (value.empty()){
+        throw std::invalid_argument("Строка пуста");
+    }
+    for (char ch: value){
+        if (ch<'0' or ch>'9'){
+            throw std::invalid_argument("неправильный цифра в строке");
+        }
+    }
+
+    for (int i = static_cast<int>(value.size()); i>0; i-=BaseDigits){
+        int start = std::max(0, i-BaseDigits);
+        int length = i- start;
+        int block = std::stoi(value.substr(start, length));
+        digits_.push_back(block);
+    }
+    removeLeadingZeros();
+}
+std::string BigInteger::toString() const{
+    if (isZero()){
+        return "0";
+    }
+
+    std::ostringstream out;
+    out<<digits_.back();
+
+    for (int i = static_cast<int>(digits_.size())- 2; i>=0; --i) {
+        out << std::setw(BaseDigits) << std::setfill('0') << digits_[i];
+    }
+    return out.str();
+}
+
+bool BigInteger::isZero() const{
+    return digits_.empty();
+}
+
+void BigInteger::removeLeadingZeros() {
+    while (!digits_.empty() && digits_.back() == 0 ){
+        digits_.pop_back();
+    }
+}
+
+bool operator<(const BigInteger& left, const BigInteger& right){
+    if (left.digits_.size() != right.digits_.size()) {
+        return left.digits_.size() < right.digits_.size();
+    }
+
+    for (int i = static_cast<int>(left.digits_.size()) - 1; i >= 0; --i) {
+        if (left.digits_[i] != right.digits_[i]) {
+            return left.digits_[i] < right.digits_[i];
+        }
+    }
+
+    return false;
+}
+
+bool operator==(const BigInteger& left, const BigInteger& right) {
+    return left.digits_ == right.digits_;
+}
+
+bool operator!=(const BigInteger& left, const BigInteger& right) {
+    return !(left == right);
+}
+
+bool operator<=(const BigInteger& left, const BigInteger& right) {
+    return !(right < left);
+}
+
+bool operator>(const BigInteger& left, const BigInteger& right) {
+    return right < left;
+}
+
+bool operator>=(const BigInteger& left, const BigInteger& right) {
+    return !(left < right);
+}
+BigInteger operator+(const BigInteger& left, const BigInteger& right){
+    BigInteger res;
+    int carry = 0;
+    long long maxSize = std::max(left.digits_.size(), right.digits_.size());
+
+    for (long long i= 0;i<maxSize || carry !=0;++i){
+        long long sum = carry;
+        if (i<left.digits_.size()){
+            sum+=left.digits_[i];
+        }
+        if (i<right.digits_.size()){
+            sum+=right.digits_[i];
+        }
+        res.digits_.push_back(static_cast<int>(sum%BigInteger::Base));
+        carry = static_cast<int>(sum/BigInteger::Base);
+    }
+    res.removeLeadingZeros();
+    return res;
+}
+BigInteger operator-(const BigInteger& left, const BigInteger& right){
+    if (left<right){
+        throw std::invalid_argument("Результ отрицательный");
+    }
+    BigInteger res;
+    int carry = 0;
+
+    for(long long i=0;i < left.digits_.size();++i){
+        long long current = left.digits_[i] - carry;
+
+        if (i < right.digits_.size()) {
+            current -= right.digits_[i];
+        }
+
+        if (current < 0) {
+            current += BigInteger::Base;
+            carry = 1;
+        } else {
+            carry = 0;
+        }
+
+        res.digits_.push_back(static_cast<int>(current));
+    }
+    res.removeLeadingZeros();
+    return res;
+}
+
+BigInteger BigInteger::multiplyByInt(int value) const {
+    if (value < 0) {
+        throw std::invalid_argument("BigInteger supports only non-negative numbers");
+    }
+
+    if (isZero() || value == 0) {
+        return BigInteger();
+    }
+
+    BigInteger res;
+    long long carry = 0;
+
+    for (size_t i = 0; i < digits_.size() || carry != 0; ++i) {
+        long long current = carry;
+
+        if (i < digits_.size()) {
+            current += 1LL * digits_[i] * value;
+        }
+
+        res.digits_.push_back(static_cast<int>(current % Base));
+        carry = current / Base;
+    }
+
+    res.removeLeadingZeros();
+    return res;
+}
+
+int BigInteger::divideByInt(int value) {
+    if (value <= 0) {
+        throw std::invalid_argument("Division by non-positive integer");
+    }
+
+    long long remainder = 0;
+
+    for (int i = static_cast<int>(digits_.size()) - 1; i >= 0; --i) {
+        long long current = digits_[i] + remainder * Base;
+        digits_[i] = static_cast<int>(current / value);
+        remainder = current % value;
+    }
+
+    removeLeadingZeros();
+    return static_cast<int>(remainder);
+}
+
+BigInteger BigInteger::simpleMultiply(const BigInteger& left, const BigInteger& right){
+    if (left.isZero() or right.isZero()){
+        return BigInteger();
+    }
+
+    BigInteger res;
+    res.digits_.assign(left.digits_.size() + right.digits_.size(),0);
+
+    for (long long i = 0;i<left.digits_.size();++i ){
+        long long carry = 0;
+        for (long long j = 0; j<right.digits_.size(); ++j ){
+            long long curr = res.digits_[i+ j] +carry +  1LL * left.digits_[i] * right.digits_[j];
+            res.digits_[i+j] = static_cast<int>(curr %BigInteger::Base);
+            carry = curr/BigInteger::Base;
+        }
+        long long pos = i + right.digits_.size();
+
+        while (carry != 0) {
+            long long curr = res.digits_[pos] + carry;
+
+            res.digits_[pos] = static_cast<int>(curr % BigInteger::Base);
+            carry = curr / BigInteger::Base;
+
+            ++pos;
+
+            if (pos >= res.digits_.size() && carry != 0) {
+                res.digits_.push_back(0);
+            }
+        }
+    }
+
+
+    res.removeLeadingZeros();
+    return res;
+}
+
+BigInteger operator*(const BigInteger& left,
+                     const BigInteger& right) {
+    return BigInteger::simpleMultiply(left, right);
+}
+
+std::pair<BigInteger, BigInteger>
+BigInteger::divmod(const BigInteger& left,
+                   const BigInteger& right) {
+    if (right.isZero()) {
+        throw std::invalid_argument("Делитель 0");
+    }
+    if (left < right){
+        return {BigInteger(), left};
+    }
+
+    BigInteger quotient;
+    BigInteger remainder;
+
+    quotient.digits_.resize(left.digits_.size());
+    for (int i = static_cast<int>(left.digits_.size())-1;i>=0;--i){
+        remainder.digits_.insert(remainder.digits_.begin(), left.digits_[i]);
+        remainder.removeLeadingZeros();
+        int low = 0;
+        int high = Base-1;
+        int best = 0;
+        while (low<=high) {
+            int mid = low+(high - low) /2;
+            BigInteger curr = right.multiplyByInt(mid);
+            if (curr<=remainder){
+                best = mid;
+                low = mid+1;
+            } else{
+                high = mid-1;
+            }
+        }
+        quotient.digits_[i] = best;
+        remainder = remainder - right.multiplyByInt(best);
+    }
+    quotient.removeLeadingZeros();
+    remainder.removeLeadingZeros();
+    return {quotient, remainder};
+}
+
+BigInteger operator/(const BigInteger& left,
+                     const BigInteger& right){
+    return BigInteger::divmod(left, right).first;
+}
+
+BigInteger operator%(const BigInteger& left,
+                     const BigInteger& right){
+    return BigInteger::divmod(left, right).second;
+}
+
+BigInteger BigInteger::gcd(BigInteger a, BigInteger b) {
+    while (!b.isZero()) {
+        BigInteger remainder = a % b;
+        a = b;
+        b = remainder;
+    }
+
+    return a;
+}
+
+BigInteger BigInteger::karatsubaMultiply(const BigInteger& left, const BigInteger& right){
+    if (left.isZero() or right.isZero()){
+        return BigInteger();
+    }
+    const int limit=64;
+    
+    if (left.digits_.size() <=limit ||
+        right.digits_.size() <=limit){
+        return simpleMultiply(left, right);
+    }
+    
+    long long n= std::max(left.digits_.size(), right.digits_.size());
+    long long half = n/2;
+    BigInteger lowLeft;
+    BigInteger highLeft;
+    BigInteger lowRight;
+    BigInteger highRight;
+    
+    for (long long i = 0; i<std::min(half,left.digits_.size()); ++i){
+        lowLeft.digits_.push_back(left.digits_[i]);
+    }
+    for (long long i = half; i<left.digits_.size(); ++i){
+        highLeft.digits_.push_back(left.digits_[i]);
+    }
+    for (long long i = 0; i<std::min(half,right.digits_.size()); ++i){
+        lowRight.digits_.push_back(left.digits_[i]);
+    }
+    for (long long i = half; i<left.digits_.size(); ++i){
+        highRight.digits_.push_back(left.digits_[i]);
+    }
+    lowLeft.removeLeadingZeros();
+    highLeft.removeLeadingZeros();
+    lowRight.removeLeadingZeros();
+    highRight.removeLeadingZeros();
+    BigInteger z0=karatsubaMultiply(lowLeft, lowRight);
+    B
+}
